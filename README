@@ -1,0 +1,10 @@
+This is super alpha.
+
+I know it sucks right now.
+
+harass me: tjgillies@gmail.com
+
+Dependencies:
+npm install redis
+rpm install base64
+for irc support: npm install node-irc
