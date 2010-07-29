@@ -377,6 +377,10 @@ http.createServer(function (req, res) {
 					writeOut({data:"thanks"});
 					break;
 				case "/location/history":
+					function rad(num){
+						return num * (Math.PI/180);
+					}
+
 					var newDate = new Date();
 					var now = new Date();
 					
@@ -389,6 +393,35 @@ http.createServer(function (req, res) {
 							foo = [];
 							location_history = [];
 							for(i=0;i<history.length;i++){
+								db_lat = history[i].location.position.latitude;
+								db_lon = history[i].location.position.longitude;
+								if (params.geometry){
+									if (params.geometry == "circle"){
+										if (params.center && params.radius){
+											
+											lat_lon = params.center.split(",");
+											param_lat = lat_lon[0];
+											param_lon = lat_lon[1];
+											d = 3959 * Math.acos(Math.cos(rad(param_lat)) 
+												* Math.cos(rad(db_lat)) * Math.cos(rad(db_lon) - 
+												rad(param_lon)) + Math.sin(rad(param_lat)) * Math.sin(rad(db_lat)));
+											if (d > params.radius){ continue; }
+										}
+										else{ writeOut({status:401,data:"Missing center!"}); }
+									}
+									if (params.geometry == "rectangle"){
+										if(params.sw && params.ne){
+											sw_lat_lon = params.sw.split(",");
+											ne_lat_lon = params.ne.split(",");
+											sw_lat = sw_lat_lon[0];
+											sw_lon = sw_lat_lon[1];
+											ne_lat = ne_lat_lon[0];
+											ne_lon = ne_lat_lon[1];
+											if (db_lat < sw_lat || db_lat > ne_lat || db_lon < sw_lon || db_lon > ne_lon){ continue; }
+										}
+									}
+										
+								}
 								if (history[i].location.position.horizontal_accuracy > params.accuracy) { continue; console.log("too big"); }
 								//console.log(history[i].location.position.horizontal_accuracy);
 								//console.log(params.accuracy);
@@ -396,10 +429,10 @@ http.createServer(function (req, res) {
 								dateString = /(.*)-(\d\d\d)/.exec(history[i].date);
 								newDate.setISO8601(dateString[1]+"-0"+dateString[2]);
 								
-								if (params.since){
+								if (params.after){
 									var since = new Date();
-									since.setTime(params.since * 1000);
-									if (since == "Invalid Date"){ since.setISO8601(params.since); console.log(since); }
+									since.setTime(params.after * 1000);
+									if (since == "Invalid Date"){ since.setISO8601(params.after); console.log(since); }
 									//since = since.toUTCString();
 									if (since <= newDate) { 
 										console.log(JSON.stringify(history[i]));
