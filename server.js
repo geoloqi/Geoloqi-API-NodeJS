@@ -381,7 +381,7 @@ http.createServer(function (req, res) {
 						return num * (Math.PI/180);
 					}
 
-					var newDate = new Date();
+					var locationDate = new Date();
 					var now = new Date();
 					
 					params.count = params.count || 100;
@@ -427,24 +427,33 @@ http.createServer(function (req, res) {
 								//console.log(params.accuracy);
 								//console.log(history[i].date);
 								dateString = /(.*)-(\d\d\d)/.exec(history[i].date);
-								newDate.setISO8601(dateString[1]+"-0"+dateString[2]);
+								locationDate.setISO8601(dateString[1]+"-0"+dateString[2]);
 								
-								if (params.after){
-									var since = new Date();
-									since.setTime(params.after * 1000);
-									if (since == "Invalid Date"){ since.setISO8601(params.after); console.log(since); }
-									//since = since.toUTCString();
-									if (since <= newDate) { 
-										console.log(JSON.stringify(history[i]));
-										foo.push(history[i]);
+								if (params.after || params.before){
+									if (params.after){
+										var after = new Date();
+										after.setTime(params.after * 1000);
+										if (after > locationDate) { 
+											//console.log(JSON.stringify(history[i]));
+											continue;
+										}
 									}
+									if (params.before){
+										var before = new Date();
+										before.setTime(params.before * 1000);
+										if (before < locationDate) { 
+											//console.log(JSON.stringify(history[i]));
+											continue;
+										}
+									}
+
 								}
 								
 								location_history.push(history[1]);
 								if (i == params.count - 1){ break; }
 							}
-							if (foo.length > 0 ){ writeOut({data:JSON.stringify(foo)}); }
-							else { writeOut({data:JSON.stringify(location_history)}); }
+							
+							writeOut({data:JSON.stringify(location_history)});
 						});
 					});
 					break;
